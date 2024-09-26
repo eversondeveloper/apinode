@@ -130,7 +130,9 @@ app.post("/votos", async (req, res) => {
     // Verificar se há uma eleição cadastrada
     const eleicaoExistente = await pool.query("SELECT * FROM dados_eleicao");
     if (eleicaoExistente.rowCount === 0) {
-      return res.status(400).json({ error: "Nenhuma eleição cadastrada no momento." });
+      return res
+        .status(400)
+        .json({ error: "Nenhuma eleição cadastrada no momento." });
     }
 
     // Verificar se o eleitor já votou
@@ -154,7 +156,6 @@ app.post("/votos", async (req, res) => {
     res.status(500).json({ error: "Erro ao registrar voto" });
   }
 });
-
 
 app.get("/votos", async (req, res) => {
   try {
@@ -279,6 +280,24 @@ app.get("/eleitores/cpf/:cpf", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar eleitor" });
+  }
+});
+app.delete("/resetar-eleitores-votos", async (req, res) => {
+  try {
+    // Apagar todos os registros da tabela 'votos' e 'eleitores'
+    await pool.query("DELETE FROM votos");
+    await pool.query("DELETE FROM eleitores");
+
+    res
+      .status(200)
+      .json({
+        mensagem: "Todos os eleitores e votos foram apagados com sucesso.",
+      });
+  } catch (err) {
+    console.error("Erro ao apagar dados:", err);
+    res
+      .status(500)
+      .json({ error: "Erro ao apagar dados das tabelas eleitores e votos" });
   }
 });
 
