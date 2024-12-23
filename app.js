@@ -69,36 +69,95 @@ app.get("/administrador/cpf/:cpf", async (req, res) => {
 });
 
 app.post("/eleicao", async (req, res) => {
-  const { cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco } =
-    req.body;
-
-  try {
-    const eleicaoExistente = await pool.query(
-      "SELECT * FROM dados_eleicao WHERE ano = $1",
-      [ano]
-    );
-
-    if (eleicaoExistente.rowCount > 0) {
-      await pool.query(
-        "UPDATE dados_eleicao SET cargo = $1, nomecand1 = $2, nomecand2 = $3, numcand1 = $4, numcand2 = $5, numbranco = $6 WHERE ano = $7",
-        [cargo, nomecand1, nomecand2, numcand1, numcand2, numbranco, ano]
+    const {
+      cargo,
+      ano,
+      nomecand1,
+      nomecand2,
+      numcand1,
+      numcand2,
+      numbranco,
+      vicecand1,
+      vicecand2,
+      partidocand1,
+      partidocand2,
+      imgcand1,
+      imgvicecand1,
+      imgcand2,
+      imgvicecand2
+    } = req.body;
+  
+    try {
+      // Verifica se já existe uma eleição para o mesmo ano
+      const eleicaoExistente = await pool.query(
+        "SELECT * FROM dados_eleicao WHERE ano = $1",
+        [ano]
       );
-      res.status(200).json({ message: "Eleição atualizada com sucesso!" });
-    } else {
-      const resultado = await pool.query(
-        "INSERT INTO dados_eleicao (cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-        [cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco]
-      );
-      res.status(201).json({
-        message: "Eleição cadastrada com sucesso!",
-        data: resultado.rows[0],
-      });
+  
+      if (eleicaoExistente.rowCount > 0) {
+        // Atualiza a eleição existente
+        await pool.query(
+          `UPDATE dados_eleicao
+           SET cargo = $1, nomecand1 = $2, nomecand2 = $3, numcand1 = $4, numcand2 = $5,
+               numbranco = $6, vicecand1 = $7, vicecand2 = $8, partidocand1 = $9,
+               partidocand2 = $10, imgcand1 = $11, imgvicecand1 = $12, imgcand2 = $13, imgvicecand2 = $14
+           WHERE ano = $15`,
+          [
+            cargo,
+            nomecand1,
+            nomecand2,
+            numcand1,
+            numcand2,
+            numbranco,
+            vicecand1,
+            vicecand2,
+            partidocand1,
+            partidocand2,
+            imgcand1,
+            imgvicecand1,
+            imgcand2,
+            imgvicecand2,
+            ano
+          ]
+        );
+        res.status(200).json({ message: "Eleição atualizada com sucesso!" });
+      } else {
+        // Cadastra uma nova eleição
+        const resultado = await pool.query(
+          `INSERT INTO dados_eleicao
+           (cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco, vicecand1,
+            vicecand2, partidocand1, partidocand2, imgcand1, imgvicecand1, imgcand2, imgvicecand2)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+           RETURNING *`,
+          [
+            cargo,
+            ano,
+            nomecand1,
+            nomecand2,
+            numcand1,
+            numcand2,
+            numbranco,
+            vicecand1,
+            vicecand2,
+            partidocand1,
+            partidocand2,
+            imgcand1,
+            imgvicecand1,
+            imgcand2,
+            imgvicecand2
+          ]
+        );
+        res.status(201).json({
+          message: "Eleição cadastrada com sucesso!",
+          data: resultado.rows[0],
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao cadastrar/atualizar eleição:", error);
+      res.status(500).json({ error: "Erro ao cadastrar/atualizar eleição" });
     }
-  } catch (error) {
-    console.error("Erro ao cadastrar/atualizar eleição:", error);
-    res.status(500).json({ error: "Erro ao cadastrar/atualizar eleição" });
-  }
-});
+  });
+  
 
 app.get("/eleicao", async (req, res) => {
   try {
