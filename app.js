@@ -3,7 +3,7 @@ import pool from "./dblogin.js";
 import cors from "cors";
 
 const app = express();
-const porta = 3000;
+const porta = 3001; // Alterado para rodar na porta 3001
 
 app.use(cors());
 app.use(express.json());
@@ -20,7 +20,6 @@ const removerPontuacaoCPF = (cpf) => {
 app.post("/administrador", async (req, res) => {
   const { nome, cpf, email } = req.body;
 
-  // Validação simples
   if (!nome || !cpf || !email) {
     return res
       .status(400)
@@ -69,95 +68,91 @@ app.get("/administrador/cpf/:cpf", async (req, res) => {
 });
 
 app.post("/eleicao", async (req, res) => {
-    const {
-      cargo,
-      ano,
-      nomecand1,
-      nomecand2,
-      numcand1,
-      numcand2,
-      numbranco,
-      vicecand1,
-      vicecand2,
-      partidocand1,
-      partidocand2,
-      imgcand1,
-      imgvicecand1,
-      imgcand2,
-      imgvicecand2
-    } = req.body;
-  
-    try {
-      // Verifica se já existe uma eleição para o mesmo ano
-      const eleicaoExistente = await pool.query(
-        "SELECT * FROM dados_eleicao WHERE ano = $1",
-        [ano]
+  const {
+    cargo,
+    ano,
+    nomecand1,
+    nomecand2,
+    numcand1,
+    numcand2,
+    numbranco,
+    vicecand1,
+    vicecand2,
+    partidocand1,
+    partidocand2,
+    imgcand1,
+    imgvicecand1,
+    imgcand2,
+    imgvicecand2
+  } = req.body;
+
+  try {
+    const eleicaoExistente = await pool.query(
+      "SELECT * FROM dados_eleicao WHERE ano = $1",
+      [ano]
+    );
+
+    if (eleicaoExistente.rowCount > 0) {
+      await pool.query(
+        `UPDATE dados_eleicao
+         SET cargo = $1, nomecand1 = $2, nomecand2 = $3, numcand1 = $4, numcand2 = $5,
+             numbranco = $6, vicecand1 = $7, vicecand2 = $8, partidocand1 = $9,
+             partidocand2 = $10, imgcand1 = $11, imgvicecand1 = $12, imgcand2 = $13, imgvicecand2 = $14
+         WHERE ano = $15`,
+        [
+          cargo,
+          nomecand1,
+          nomecand2,
+          numcand1,
+          numcand2,
+          numbranco,
+          vicecand1,
+          vicecand2,
+          partidocand1,
+          partidocand2,
+          imgcand1,
+          imgvicecand1,
+          imgcand2,
+          imgvicecand2,
+          ano
+        ]
       );
-  
-      if (eleicaoExistente.rowCount > 0) {
-        // Atualiza a eleição existente
-        await pool.query(
-          `UPDATE dados_eleicao
-           SET cargo = $1, nomecand1 = $2, nomecand2 = $3, numcand1 = $4, numcand2 = $5,
-               numbranco = $6, vicecand1 = $7, vicecand2 = $8, partidocand1 = $9,
-               partidocand2 = $10, imgcand1 = $11, imgvicecand1 = $12, imgcand2 = $13, imgvicecand2 = $14
-           WHERE ano = $15`,
-          [
-            cargo,
-            nomecand1,
-            nomecand2,
-            numcand1,
-            numcand2,
-            numbranco,
-            vicecand1,
-            vicecand2,
-            partidocand1,
-            partidocand2,
-            imgcand1,
-            imgvicecand1,
-            imgcand2,
-            imgvicecand2,
-            ano
-          ]
-        );
-        res.status(200).json({ message: "Eleição atualizada com sucesso!" });
-      } else {
-        // Cadastra uma nova eleição
-        const resultado = await pool.query(
-          `INSERT INTO dados_eleicao
-           (cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco, vicecand1,
-            vicecand2, partidocand1, partidocand2, imgcand1, imgvicecand1, imgcand2, imgvicecand2)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-           RETURNING *`,
-          [
-            cargo,
-            ano,
-            nomecand1,
-            nomecand2,
-            numcand1,
-            numcand2,
-            numbranco,
-            vicecand1,
-            vicecand2,
-            partidocand1,
-            partidocand2,
-            imgcand1,
-            imgvicecand1,
-            imgcand2,
-            imgvicecand2
-          ]
-        );
-        res.status(201).json({
-          message: "Eleição cadastrada com sucesso!",
-          data: resultado.rows[0],
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao cadastrar/atualizar eleição:", error);
-      res.status(500).json({ error: "Erro ao cadastrar/atualizar eleição" });
+      res.status(200).json({ message: "Eleição updated com sucesso!" });
+    } else {
+      const resultado = await pool.query(
+        `INSERT INTO dados_eleicao
+         (cargo, ano, nomecand1, nomecand2, numcand1, numcand2, numbranco, vicecand1,
+          vicecand2, partidocand1, partidocand2, imgcand1, imgvicecand1, imgcand2, imgvicecand2)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         RETURNING *`,
+        [
+          cargo,
+          ano,
+          nomecand1,
+          nomecand2,
+          numcand1,
+          numcand2,
+          numbranco,
+          vicecand1,
+          vicecand2,
+          partidocand1,
+          partidocand2,
+          imgcand1,
+          imgvicecand1,
+          imgcand2,
+          imgvicecand2
+        ]
+      );
+      res.status(201).json({
+        message: "Eleição cadastrada com sucesso!",
+        data: resultado.rows[0],
+      });
     }
-  });
-  
+  } catch (error) {
+    console.error("Erro ao cadastrar/atualizar eleição:", error);
+    res.status(500).json({ error: "Erro ao cadastrar/atualizar eleição" });
+  }
+});
 
 app.get("/eleicao", async (req, res) => {
   try {
@@ -186,7 +181,6 @@ app.post("/votos", async (req, res) => {
   }
 
   try {
-    // Verificar se há uma eleição cadastrada
     const eleicaoExistente = await pool.query("SELECT * FROM dados_eleicao");
     if (eleicaoExistente.rowCount === 0) {
       return res
@@ -194,7 +188,6 @@ app.post("/votos", async (req, res) => {
         .json({ error: "Nenhuma eleição cadastrada no momento." });
     }
 
-    // Verificar se o eleitor já votou
     const votoExistente = await pool.query(
       "SELECT * FROM votos WHERE cpf = $1",
       [cpf]
@@ -203,7 +196,6 @@ app.post("/votos", async (req, res) => {
       return res.status(400).json({ error: "Eleitor já votou." });
     }
 
-    // Registrar o voto
     const resultado = await pool.query(
       "INSERT INTO votos (number, cpf) VALUES ($1, $2) RETURNING *",
       [number, cpf]
@@ -341,9 +333,9 @@ app.get("/eleitores/cpf/:cpf", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar eleitor" });
   }
 });
+
 app.delete("/resetar-eleitores-votos", async (req, res) => {
   try {
-    // Apagar todos os registros da tabela 'votos' e 'eleitores'
     await pool.query("DELETE FROM votos");
     await pool.query("DELETE FROM eleitores");
 

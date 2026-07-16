@@ -3,13 +3,13 @@ const { Pool } = pkg;
 
 const pool = new Pool({
   user: "postgres", 
-  host: "worryingly-charitable-pewee.data-1.use1.tembo.io", 
-  database: "sistema_votacao3", 
-  password: "xQ2D0VaoyJcizFd9", 
+  host: "localhost", 
+  database: "sistema_votacao", 
+  password: "48344834", 
   port: 5432, 
-  ssl: {
-    rejectUnauthorized: false, 
-  }
+  // ssl: {
+  //   rejectUnauthorized: false, 
+  // }
 });
 
 export default pool;
